@@ -45,23 +45,31 @@ consumer.Received += async (model, ea) =>
     var body = ea.Body.ToArray();
     var message = Encoding.UTF8.GetString(body);
 
-    Console.WriteLine(message);
-    ConcilliationMessageDTO? dto = JsonSerializer.Deserialize<ConcilliationMessageDTO>(message);
-
-    Console.WriteLine("Processing concilliation");
-    Transactions transactions = await JSONReader.ReadFile(
-        dto.Concilliation.FilePath,
-        dto.Concilliation.Date,
-        dto.PaymentProviderId
-    );
-    Console.WriteLine(transactions.DifferentStatus.ElementAt(0).Id);
-    foreach (var item in transactions.DataBaseToFile)
+    if (message is null)
     {
-        Console.WriteLine($"{item.Id} {item.Status}");
+        channel.BasicReject(ea.DeliveryTag, false);
+        return;
     }
-    Console.WriteLine(transactions.FileToDatabase.ElementAt(0).Id);
 
-    channel.BasicAck(ea.DeliveryTag, false);
+    try
+    {
+        Console.WriteLine(message);
+        ConcilliationMessageDTO? dto = JsonSerializer.Deserialize<ConcilliationMessageDTO>(message);
+
+        Console.WriteLine("Processing concilliation");
+        Transactions transactions = await JSONReader.ReadFile(
+            dto.Concilliation.FilePath,
+            dto.Concilliation.Date,
+            dto.PaymentProviderId
+        );
+
+        channel.BasicAck(ea.DeliveryTag, false);
+    }
+    catch
+    {
+        channel.BasicReject(ea.DeliveryTag, false);
+    }
+
 
 };
 

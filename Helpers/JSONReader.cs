@@ -57,25 +57,23 @@ namespace concilliation_consumer
                             else if (dbPayment.Status != foundInFile.Status)
                             {
                                 transactions.DifferentStatus.Add(dbPayment);
-                                fileData.Remove(foundInFile); // Remove to prevent double counting
+                                fileData.Remove(foundInFile);
                             }
                             else
                             {
-                                fileData.Remove(foundInFile); // Remove to prevent double counting
+                                fileData.Remove(foundInFile);
                             }
                         }
 
                         // Update dbCount
                         dbCount -= batchSize;
 
-                        //If there are remaining transactions in dbData not yet processed
                         if (dbCount > 0)
                         {
                             batchCount++;
                             dbData = await databaseHandler.Retrieve(date, paymentProviderId, batchCount, batchSize);
                         }
 
-                        // Add transactions in fileData that are not found in dbData
                         transactions.FileToDatabase.AddRange(fileData.Where(d => dbData.All(db => db.Id != d.Id)));
 
                         fileData.Clear();
@@ -83,7 +81,6 @@ namespace concilliation_consumer
                     }
                 }
 
-                // If there are remaining transactions in dbData not yet processed
                 while (dbCount >= 0)
                 {
                     dbData = await databaseHandler.Retrieve(date, paymentProviderId, batchCount, batchSize);

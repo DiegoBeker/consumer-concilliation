@@ -18,3 +18,4 @@
 /home/driven/Área de Trabalho/Stone/concilliation-consumer/bin/Debug/net8.0/Microsoft.Extensions.DependencyInjection.Abstractions.dll
 /home/driven/Área de Trabalho/Stone/concilliation-consumer/bin/Debug/net8.0/Microsoft.Extensions.Logging.Abstractions.dll
 /home/driven/Área de Trabalho/Stone/concilliation-consumer/bin/Debug/net8.0/Npgsql.dll
+/home/driven/Área de Trabalho/Stone/concilliation-consumer/obj/Debug/net8.0/concilliation-consumer.sourcelink.json

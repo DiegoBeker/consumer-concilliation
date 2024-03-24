@@ -11,12 +11,46 @@ public class DatabaseHandler
         _connectionString = connectionString;
     }
 
+    public async Task<int> Count(DateTime date, long paymentProviderId)
+    {
+        using var conn = new NpgsqlConnection(_connectionString);
+        await conn.OpenAsync();
+        var countDb = 0;
 
+        var sql = @"
+            SELECT Count(*)
+            FROM ""Payment"" payment
+            INNER JOIN ""PaymentProviderAccount"" AS origin
+                ON origin.""Id"" = payment.""PaymentProviderAccountId""
+            INNER JOIN ""PixKey"" AS pix
+                ON pix.""Id"" = payment.""PixKeyId""
+            INNER JOIN ""PaymentProviderAccount"" AS destiny
+                ON destiny.""Id"" = pix.""PaymentProviderAccountId""
+            WHERE date_trunc('day', payment.""CreatedAt"") = @date AND (
+                origin.""PaymentProviderId"" = @paymentProviderId OR
+                destiny.""PaymentProviderId"" = @paymentProviderId)";
 
-    public async Task<List<PaymentCheck>> RetrieveDataFromDatabase(
+        using var cmd = new NpgsqlCommand(sql, conn);
+
+        cmd.Parameters.AddWithValue("date", date);
+        cmd.Parameters.AddWithValue("paymentProviderId", paymentProviderId);
+
+        await using var reader = await cmd.ExecuteReaderAsync();
+
+        while (await reader.ReadAsync())
+        {
+            var count = reader.GetInt32(0);
+            countDb = count;
+        }
+
+        return countDb;
+    }
+
+    public async Task<List<PaymentCheck>> Retrieve(
         DateTime date,
         long paymentProviderId,
-        List<PaymentCheck> filePayments
+        int batchCount,
+        int batchSize
     )
     {
         var dbPayments = new List<PaymentCheck>();
@@ -37,16 +71,19 @@ public class DatabaseHandler
                 ON destiny.""Id"" = pix.""PaymentProviderAccountId""
             WHERE date_trunc('day', payment.""CreatedAt"") = @date AND (
                 origin.""PaymentProviderId"" = @paymentProviderId OR
-                destiny.""PaymentProviderId"" = @paymentProviderId
-            )";
+                destiny.""PaymentProviderId"" = @paymentProviderId)
+            ORDER BY payment.""Id""
+            OFFSET @batchCount * @batchSize
+            LIMIT @batchSize";
+
             using var cmd = new NpgsqlCommand(sql, conn);
 
             cmd.Parameters.AddWithValue("date", date);
             cmd.Parameters.AddWithValue("paymentProviderId", paymentProviderId);
+            cmd.Parameters.AddWithValue("batchCount", batchCount);
+            cmd.Parameters.AddWithValue("batchSize", batchSize);
 
             await using var reader = await cmd.ExecuteReaderAsync();
-
-
 
             while (await reader.ReadAsync())
             {

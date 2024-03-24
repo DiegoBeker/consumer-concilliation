@@ -1,47 +1,103 @@
+using System.IO;
+using System.Linq;
 using System.Text.Json;
+using concilliation_consumer.Domain;
 
-namespace concilliation_consumer;
-
-public class JSONReader
+namespace concilliation_consumer
 {
-    public static List<PaymentCheck> ReadFile(
-        string filePath,
-        DateTime date,
-        long paymentProviderId
-        )
+    public class JSONReader
     {
-
-        int batchSize = 10;
-
-        List<PaymentCheck> result = [];
-
-        if (File.Exists(filePath))
+        public static async Task<Transactions> ReadFile(
+            string filePath,
+            DateTime date,
+            long paymentProviderId
+        )
         {
-            using StreamReader fileReader = new(filePath);
-            string? line;
-            int linecount = 0;
-            List<PaymentCheck> currentPayments = [];
-            
-            while ((line = fileReader.ReadLine()) != null)
-            {
-                // Console.WriteLine(line);
-                PaymentCheck? paymentCheck = JsonSerializer.Deserialize<PaymentCheck>(line);
-                // Console.WriteLine("Id: " + paymentCheck.Id);
-                // Console.WriteLine("Status: " + paymentCheck.Status);
-                linecount++;
-                currentPayments.Add(paymentCheck);
+            var connString = "Host=localhost;Port=5432;Username=postgres;Password=postgres;Database=me-faz-um-pix";
+            var databaseHandler = new DatabaseHandler(connString);
+            int batchSize = 10;
 
-                if (linecount >= batchSize)
+            Transactions transactions = new();
+
+            int dbCount = await databaseHandler.Count(date, paymentProviderId);
+            Console.WriteLine($"dbCount: {dbCount}");
+
+            if (File.Exists(filePath))
+            {
+                List<PaymentCheck> fileData = new List<PaymentCheck>();
+                List<PaymentCheck> dbData = new List<PaymentCheck>();
+
+                using StreamReader fileReader = new StreamReader(filePath);
+                string? line;
+                int linecount = 0;
+                int batchCount = 0;
+
+                while ((line = await fileReader.ReadLineAsync()) != null)
                 {
-                    currentPayments.Clear();
-                    linecount = 0;
+                    if (line != null)
+                    {
+                        PaymentCheck paymentCheck = JsonSerializer.Deserialize<PaymentCheck>(line);
+                        fileData.Add(paymentCheck);
+                    }
+
+                    linecount++;
+
+                    if (linecount >= batchSize)
+                    {
+                        dbData = await databaseHandler.Retrieve(date, paymentProviderId, batchCount, batchSize);
+
+                        foreach (var dbPayment in dbData)
+                        {
+                            var foundInFile = fileData.FirstOrDefault(d => d.Id == dbPayment.Id);
+
+                            if (foundInFile == null)
+                            {
+                                transactions.DataBaseToFile.Add(dbPayment);
+                            }
+                            else if (dbPayment.Status != foundInFile.Status)
+                            {
+                                transactions.DifferentStatus.Add(dbPayment);
+                                fileData.Remove(foundInFile); // Remove to prevent double counting
+                            }
+                            else
+                            {
+                                fileData.Remove(foundInFile); // Remove to prevent double counting
+                            }
+                        }
+
+                        // Update dbCount
+                        dbCount -= batchSize;
+
+                        //If there are remaining transactions in dbData not yet processed
+                        if (dbCount > 0)
+                        {
+                            batchCount++;
+                            dbData = await databaseHandler.Retrieve(date, paymentProviderId, batchCount, batchSize);
+                        }
+
+                        // Add transactions in fileData that are not found in dbData
+                        transactions.FileToDatabase.AddRange(fileData.Where(d => dbData.All(db => db.Id != d.Id)));
+
+                        fileData.Clear();
+                        linecount = 0;
+                    }
+                }
+
+                // If there are remaining transactions in dbData not yet processed
+                while (dbCount >= 0)
+                {
+                    dbData = await databaseHandler.Retrieve(date, paymentProviderId, batchCount, batchSize);
+                    transactions.DataBaseToFile.AddRange(dbData);
+                    dbCount -= batchSize;
+                    batchCount++;
                 }
             }
+            else
+            {
+                Console.WriteLine("Invalid path");
+            }
+
+            return transactions;
         }
-        else
-        {
-            Console.WriteLine("invalid path");
-        }
-        return result;
     }
 }

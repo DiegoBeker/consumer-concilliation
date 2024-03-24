@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using System.Text.Json;
 using concilliation_consumer;
+using concilliation_consumer.Domain;
 using concilliation_consumer.Dtos;
 using Npgsql;
 using RabbitMQ.Client;
@@ -12,9 +13,6 @@ ConnectionFactory factory = new ConnectionFactory
     UserName = "admin",
     Password = "admin"
 };
-
-var connString = "Host=localhost;Username=postgres;Password=postgres;Database=me-faz-um-pix";
-var databaseHandler = new DatabaseHandler(connString);
 
 if (args.Length == 0 || string.IsNullOrEmpty(args[0]))
 {
@@ -50,10 +48,18 @@ consumer.Received += async (model, ea) =>
     Console.WriteLine(message);
     ConcilliationMessageDTO? dto = JsonSerializer.Deserialize<ConcilliationMessageDTO>(message);
 
-    List<PaymentCheck> dataFromDatabase = await databaseHandler.RetrieveDataFromDatabase(dto.Concilliation.Date, dto.PaymentProviderId, []);
-    Console.WriteLine(dataFromDatabase.Count);
     Console.WriteLine("Processing concilliation");
-    JSONReader.ReadFile(dto.Concilliation.FilePath, dto.Concilliation.Date, dto.PaymentProviderId);
+    Transactions transactions = await JSONReader.ReadFile(
+        dto.Concilliation.FilePath,
+        dto.Concilliation.Date,
+        dto.PaymentProviderId
+    );
+    Console.WriteLine(transactions.DifferentStatus.ElementAt(0).Id);
+    foreach (var item in transactions.DataBaseToFile)
+    {
+        Console.WriteLine($"{item.Id} {item.Status}");
+    }
+    Console.WriteLine(transactions.FileToDatabase.ElementAt(0).Id);
 
     channel.BasicAck(ea.DeliveryTag, false);
 

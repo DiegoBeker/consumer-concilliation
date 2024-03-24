@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "dgSpecHash": "RoZ/H326nuz52KUsS5rc7eOUVd93ODVLNFgWwvt83O0f547QIelnvIXxcvT94APveH7NOq7SNYnANokaBcAYJA==",
+  "success": true,
+  "projectFilePath": "/home/driven/Área de Trabalho/Stone/concilliation-consumer/concilliation-consumer.csproj",
+  "expectedPackageFiles": [
+    "/home/driven/.nuget/packages/microsoft.extensions.dependencyinjection.abstractions/8.0.0/microsoft.extensions.dependencyinjection.abstractions.8.0.0.nupkg.sha512",
+    "/home/driven/.nuget/packages/microsoft.extensions.logging.abstractions/8.0.0/microsoft.extensions.logging.abstractions.8.0.0.nupkg.sha512",
+    "/home/driven/.nuget/packages/npgsql/8.0.2/npgsql.8.0.2.nupkg.sha512",
+    "/home/driven/.nuget/packages/rabbitmq.client/6.8.1/rabbitmq.client.6.8.1.nupkg.sha512",
+    "/home/driven/.nuget/packages/system.memory/4.5.5/system.memory.4.5.5.nupkg.sha512",
+    "/home/driven/.nuget/packages/system.threading.channels/7.0.0/system.threading.channels.7.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}

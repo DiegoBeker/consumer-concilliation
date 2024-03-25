@@ -13,14 +13,13 @@ namespace concilliation_consumer
             long paymentProviderId
         )
         {
-            var connString = "Host=localhost;Port=5432;Username=postgres;Password=postgres;Database=me-faz-um-pix";
+            var connString = "Host=localhost;Port=5433;Username=postgres;Password=postgres;Database=me-faz-um-pix";
             var databaseHandler = new DatabaseHandler(connString);
-            int batchSize = 10;
+            int batchSize = 100000;
 
             Transactions transactions = new();
 
             int dbCount = await databaseHandler.Count(date, paymentProviderId);
-            Console.WriteLine($"dbCount: {dbCount}");
 
             if (File.Exists(filePath))
             {

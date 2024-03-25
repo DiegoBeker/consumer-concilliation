@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("concilliation-consumer")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e62b751f47b7aaaef20265c86348edc24a75eae9")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9d1e6db037fda7fa295ebdd08aca21809e9576dc")]
 [assembly: System.Reflection.AssemblyProductAttribute("concilliation-consumer")]
 [assembly: System.Reflection.AssemblyTitleAttribute("concilliation-consumer")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

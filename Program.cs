@@ -62,15 +62,16 @@ consumer.Received += async (model, ea) =>
             dto.Concilliation.Date,
             dto.PaymentProviderId
         );
-
+        Console.WriteLine($"DbTOFILE: {transactions.DataBaseToFile.Count}");
+        Console.WriteLine($"FILETODB: {transactions.FileToDatabase.Count}");
+        Console.WriteLine($"DIFF: {transactions.DifferentStatus.Count}");
+        Console.WriteLine($"Sending transactions to {dto.Concilliation.Postback}");
         channel.BasicAck(ea.DeliveryTag, false);
     }
     catch
     {
         channel.BasicReject(ea.DeliveryTag, false);
     }
-
-
 };
 
 channel.BasicConsume(
